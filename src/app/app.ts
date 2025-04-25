@@ -1,4 +1,4 @@
-import { MemoryStorage, MessageFactory, TurnContext } from "botbuilder";
+import { MemoryStorage, MessageFactory, TurnContext, BotFrameworkAdapter } from "botbuilder";
 import * as path from "path";
 import config from "../config";
 import fs from 'fs';
@@ -68,15 +68,17 @@ app.feedbackLoop(async (context, state, feedbackLoopData) => {
 const server = restify.createServer();
 server.use(restify.plugins.bodyParser());
 
+// Initialize BotFrameworkAdapter
+const adapter = new BotFrameworkAdapter({
+  appId: process.env.MicrosoftAppId,
+  appPassword: process.env.MicrosoftAppPassword,
+});
+
 // Define the endpoint for Teams messages
 server.post("/api/messages", async (req, res) => {
-  try {
-    await app.run(req, res);
-  } catch (error) {
-    console.error("[onTurnError] Unhandled error:", error);
-    res.status(500);
-    res.send("An error occurred while processing the request.");
-  }
+  await adapter.processActivity(req, res, async (context) => {
+    await app.run(context);
+  });
 });
 
 // Start the server

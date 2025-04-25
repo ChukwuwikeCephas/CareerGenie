@@ -27,9 +27,11 @@
     },
     "dependencies": {
         "@microsoft/teams-ai": "^1.5.3",
+        "@types/restify": "^8.5.12",
         "botbuilder": "^4.23.1",
         "express": "^5.0.1",
-        "fs": "^0.0.1-security"
+        "fs": "^0.0.1-security",
+        "restify": "^11.1.0"
     },
     "devDependencies": {
         "@types/express": "^5.0.0",
