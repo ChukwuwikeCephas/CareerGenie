@@ -81,9 +81,16 @@ server.post("/api/messages", async (req, res) => {
 
 // Start the server
 const PORT = process.env.port || 3978;
+const NGROK_URL = process.env.NGROK_URL || `http://localhost:${PORT}`;
+
 server.listen(PORT, () => {
-  console.log(`Bot is running locally on http://localhost:${PORT}`);
+  console.log(`Bot is running locally on ${NGROK_URL}`);
   console.log("Use a tunneling service like ngrok to expose this endpoint for Teams.");
+
+  // Log ngrok instructions
+  console.log("If ngrok is running, use the following command to expose your bot:");
+  console.log("ngrok http 3978");
+  console.log("Once ngrok is running, update your bot's messaging endpoint with the ngrok URL.");
 });
 
 export default app;

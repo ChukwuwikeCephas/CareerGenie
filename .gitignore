@@ -15,6 +15,7 @@ node_modules/
 .env
 .deployment
 .DS_Store
+*.log
 
 # build
 lib/
