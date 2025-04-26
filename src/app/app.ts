@@ -1,11 +1,12 @@
-import { MemoryStorage, MessageFactory, TurnContext, BotFrameworkAdapter } from "botbuilder";
+import { createResponseCard } from './card';
+import { CardFactory, MemoryStorage, MessageFactory, TurnContext, BotFrameworkAdapter } from "botbuilder";
 import * as path from "path";
 import config from "../config";
 import fs from 'fs';
 import * as restify from "restify";
 
 // See https://aka.ms/teams-ai-library to learn more about the Teams AI library.
-import { Application, ActionPlanner, OpenAIModel, PromptManager } from "@microsoft/teams-ai";
+import { Application, ActionPlanner, OpenAIModel, PromptManager, AI, PredictedSayCommand } from "@microsoft/teams-ai";
 
 // Create AI components
 const model = new OpenAIModel({
@@ -67,6 +68,33 @@ app.feedbackLoop(async (_context, _state, feedbackLoopData) => {
   } else {
     console.log('👎' + ' ' + feedbackLoopData.actionValue.feedback!);
   }
+});
+
+// Add PredictedSayCommand action to customize the citation
+app.ai.action<PredictedSayCommand>(AI.SayCommandActionName, async (context, state, data, action) => {
+  let activity;
+  if (data.response.context && data.response.context.citations.length > 0) {
+      const attachment = CardFactory.adaptiveCard(createResponseCard(data.response));
+      activity = MessageFactory.attachment(attachment);
+  } else {
+      activity = MessageFactory.text(data.response.content);
+  }
+
+  activity.entities = [
+    {
+        type: "https://schema.org/Message",
+        "@type": "Message",
+        "@context": "https://schema.org",
+        "@id": ""
+    }
+  ];
+  activity.channelData = {
+    feedbackLoopEnabled: true
+  };
+
+  await context.sendActivity(activity);
+
+  return "success";
 });
 
 // Create a local server
