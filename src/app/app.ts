@@ -28,15 +28,15 @@ const planner = new ActionPlanner({
       const template = await prompts.getPrompt('chat');
       const skprompt = fs.readFileSync(path.join(__dirname, '..', 'prompts', 'chat', 'skprompt.txt'));
 
+      // Ensure the Azure Search endpoint is properly configured
       const dataSources = (template.config.completion as any)['data_sources'];
 
       dataSources.forEach((dataSource: any) => {
         if (dataSource.type === 'azure_search') {
-          dataSource.parameters.authentication.key = config.azureSearchKey;
-          dataSource.parameters.endpoint = config.azureSearchEndpoint;
+          dataSource.parameters.authentication.key = 'KdwXUJBnkvPgIyldMnOZ83pqV6utE96lY2x1CewrTFAzSeBOSJT5';
+          dataSource.parameters.endpoint = 'https://rivetingsearch.search.windows.net';
           dataSource.parameters.indexName = config.indexName;
-          dataSource.parameters.embedding_dependency.deployment_name =
-            config.azureOpenAIEmbeddingDeploymentName;
+          dataSource.parameters.embedding_dependency.deployment_name = 'text-embedding';
           dataSource.parameters.role_information = `${skprompt.toString('utf-8')}`;
         }
       });
