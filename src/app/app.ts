@@ -55,13 +55,18 @@ const app = new Application({
   storage,
   ai: {
     planner,
+    // feedback loop is enabled
     enable_feedback_loop: true,
   },
 });
 
-app.feedbackLoop(async (context, state, feedbackLoopData) => {
-  //add custom feedback process logic here
-  console.log("Your feedback is " + JSON.stringify(context.activity.value));
+// Add feedback loop handling logic
+app.feedbackLoop(async (_context, _state, feedbackLoopData) => {
+  if (feedbackLoopData.actionValue.reaction === 'like') {
+    console.log('👍' + ' ' + feedbackLoopData.actionValue.feedback!);
+  } else {
+    console.log('👎' + ' ' + feedbackLoopData.actionValue.feedback!);
+  }
 });
 
 // Create a local server
