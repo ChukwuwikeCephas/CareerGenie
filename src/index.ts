@@ -1,5 +1,6 @@
 // Import required packages
 import express from "express";
+import * as path from 'path';
 
 // This bot's adapter
 import adapter from "./adapter";
@@ -13,6 +14,15 @@ expressApp.use(express.json());
 
 const server = expressApp.listen(process.env.port || process.env.PORT || 3978, () => {
   console.log(`\nBot Started, ${expressApp.name} listening to`, server.address());
+});
+
+// Serve static files for authentication HTML
+const authFilePattern = /^\/auth-(start|end)\.html$/;
+expressApp.get(
+  authFilePattern, (req, res) => {
+    const fileName = req.path;
+    const filePath = path.join(__dirname, 'public', fileName);
+    res.sendFile(filePath);
 });
 
 // Listen for incoming requests.

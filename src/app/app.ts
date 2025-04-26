@@ -6,7 +6,8 @@ import fs from 'fs';
 import * as restify from "restify";
 
 // See https://aka.ms/teams-ai-library to learn more about the Teams AI library.
-import { Application, ActionPlanner, OpenAIModel, PromptManager, AI, PredictedSayCommand } from "@microsoft/teams-ai";
+import { Application, ActionPlanner, OpenAIModel, PromptManager, AI, PredictedSayCommand, AuthError, TurnState } from "@microsoft/teams-ai";
+import { Client } from "@microsoft/microsoft-graph-client";
 
 // Create AI components
 const model = new OpenAIModel({
@@ -54,10 +55,23 @@ const planner = new ActionPlanner({
 const storage = new MemoryStorage();
 const app = new Application({
   storage,
+  authentication: {settings: {
+    graph: {
+      scopes: ['User.Read'],
+      msalConfig: {
+        auth: {
+          clientId: config.aadAppClientId!,
+          clientSecret: config.aadAppClientSecret!,
+          authority: `${config.aadAppOauthAuthorityHost}/common`
+        }
+      },
+      signInLink: `https://${config.botDomain}/auth-start.html`,
+      endOnInvalidMessage: true
+    }
+  }},
   ai: {
     planner,
-    // feedback loop is enabled
-    enable_feedback_loop: true,
+    enable_feedback_loop: true
   },
 });
 
@@ -105,6 +119,50 @@ app.ai.action<PredictedSayCommand>(AI.SayCommandActionName, async (context, stat
 
   return "success";
 });
+
+// Add authentication event handlers
+app.authentication.get('graph').onUserSignInSuccess(async (context, state) => {
+  const token = state.temp.authTokens['graph'];
+  await context.sendActivity(`Hello ${await getUserDisplayName(token)}. You have successfully logged in to CareerGenie!`);     
+});
+
+app.authentication
+    .get('graph')
+    .onUserSignInFailure(async (context, _state, error) => {
+        await context.sendActivity('Failed to login');
+        await context.sendActivity(`Error message: ${error.message}`);
+    });
+
+// Add messaging commands
+app.message('/reset', async (context, state) => {
+  state.deleteConversationState();
+  await context.sendActivity(`Ok I've deleted the current conversation state.`);
+});
+
+app.message('/signout', async (context, state) => {
+  await app.authentication.signOutUser(context, state);
+  await context.sendActivity(`You have signed out`);
+});
+
+// Function to fetch user's display name using Microsoft Graph
+async function getUserDisplayName(token: string): Promise<string | undefined> {
+  let displayName: string | undefined;
+
+  const client = Client.init({
+    authProvider: (done) => {
+      done(null, token);
+    }
+  });
+
+  try {
+    const user = await client.api('/me').get();
+    displayName = user.displayName;
+  } catch (error) {
+    console.log(`Error calling Graph SDK in getUserDisplayName: ${error}`);
+  }
+
+  return displayName;
+}
 
 // Create a local server
 const server = restify.createServer();
