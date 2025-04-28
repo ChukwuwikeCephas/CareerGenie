@@ -1,7 +1,7 @@
-# yaml-language-server: $schema=https://aka.ms/teams-toolkit/v1.8/yaml.schema.json
+# yaml-language-server: $schema=https://aka.ms/teams-toolkit/v1.10/yaml.schema.json
 # Visit https://aka.ms/teamsfx-v5.0-guide for details on this file
 # Visit https://aka.ms/teamsfx-actions for details on actions
-version: v1.8
+version: v1.10
 
 provision:
   # Creates a Teams app
@@ -115,3 +115,4 @@ deploy:
         AAD_APP_TENANT_ID: ${{AAD_APP_TENANT_ID}}
         AAD_APP_OAUTH_AUTHORITY_HOST: ${{AAD_APP_OAUTH_AUTHORITY_HOST}}
         AAD_APP_OAUTH_AUTHORITY: ${{AAD_APP_OAUTH_AUTHORITY}}
+        HR_EMAIL: ${{HR_EMAIL}}

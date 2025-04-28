@@ -3,11 +3,18 @@ import { CardFactory, MemoryStorage, MessageFactory, TurnContext, BotFrameworkAd
 import * as path from "path";
 import config from "../config";
 import fs from 'fs';
+import { Client } from '@microsoft/microsoft-graph-client';
 import * as restify from "restify";
+import { ensureListExists, getCandidates, setCandidates, deleteList, sendLists } from "./actions";
 
 // See https://aka.ms/teams-ai-library to learn more about the Teams AI library.
-import { Application, ActionPlanner, OpenAIModel, PromptManager, AI, PredictedSayCommand, AuthError, TurnState } from "@microsoft/teams-ai";
-import { Client } from "@microsoft/microsoft-graph-client";
+import { AuthError, ActionPlanner, OpenAIModel, PromptManager, AI, PredictedSayCommand, Application, TurnState, DefaultConversationState } from "@microsoft/teams-ai";
+
+// Strongly type the application's turn state
+interface ConversationState extends DefaultConversationState {
+  lists: Record<string, string[]>;
+}
+export type ApplicationTurnState = TurnState<ConversationState>;
 
 // Create AI components
 const model = new OpenAIModel({
@@ -25,30 +32,7 @@ const prompts = new PromptManager({
 const planner = new ActionPlanner({
   model,
   prompts,
-  defaultPrompt: async () => {
-    try {
-      const template = await prompts.getPrompt('chat');
-      const skprompt = fs.readFileSync(path.join(__dirname, '..', 'prompts', 'chat', 'skprompt.txt'));
-
-      // Ensure the Azure Search endpoint is properly configured
-      const dataSources = (template.config.completion as any)['data_sources'];
-
-      dataSources.forEach((dataSource: any) => {
-        if (dataSource.type === 'azure_search') {
-          dataSource.parameters.authentication.key = 'KdwXUJBnkvPgIyldMnOZ83pqV6utE96lY2x1CewrTFAzSeBOSJT5';
-          dataSource.parameters.endpoint = 'https://rivetingsearch.search.windows.net';
-          dataSource.parameters.indexName = config.indexName;
-          dataSource.parameters.embedding_dependency.deployment_name = 'text-embedding';
-          dataSource.parameters.role_information = `${skprompt.toString('utf-8')}`;
-        }
-      });
-
-      return template;
-    } catch (error) {
-      console.error("Error in defaultPrompt:", error.message);
-      throw new Error("Failed to generate default prompt. Please check your configuration and API parameters.");
-    }
-  },
+  defaultPrompt: choosePrompt,
 });
 
 // Define storage and application
@@ -57,7 +41,7 @@ const app = new Application({
   storage,
   authentication: {settings: {
     graph: {
-      scopes: ['User.Read'],
+      scopes: ['User.Read', 'Mail.Send'],
       msalConfig: {
         auth: {
           clientId: config.aadAppClientId!,
@@ -120,6 +104,54 @@ app.ai.action<PredictedSayCommand>(AI.SayCommandActionName, async (context, stat
   return "success";
 });
 
+// Register action handlers
+interface ListOnly {
+  list: string;
+}
+
+interface ListAndCandidates extends ListOnly {
+  Candidates?: string[];
+}
+
+app.ai.action('createList', async (context: TurnContext, state: ApplicationTurnState, parameters: ListAndCandidates) => {
+  ensureListExists(state, parameters.list);
+  if (Array.isArray(parameters.Candidates) && parameters.Candidates.length > 0) {
+      await app.ai.doAction(context, state, 'addCandidates', parameters);
+      return `List created and Candidates added. Summarize your action.`;
+  } else {
+      return `List created. Summarize your action.`;
+  }
+});
+
+app.ai.action('deleteList', async (context: TurnContext, state: ApplicationTurnState, parameters: ListOnly) => {
+  deleteList(state, parameters.list);
+  return `list deleted. Summarize your action.`;
+});
+
+app.ai.action('addCandidates', async (context: TurnContext, state: ApplicationTurnState, parameters: ListAndCandidates) => {
+  const Candidates = getCandidates(state, parameters.list);
+  Candidates.push(...(parameters.Candidates ?? []));
+  setCandidates(state, parameters.list, Candidates);
+  return `Candidates added. Summarize your action.`;
+});
+
+app.ai.action('removeCandidates', async (context: TurnContext, state: ApplicationTurnState, parameters: ListAndCandidates) => {
+  const Candidates = getCandidates(state, parameters.list);
+  (parameters.Candidates ?? []).forEach((candidate: string) => {
+      const index = Candidates.indexOf(candidate);
+      if (index >= 0) {
+          Candidates.splice(index, 1);
+      }
+  });
+  setCandidates(state, parameters.list, Candidates);
+  return `Candidates removed. Summarize your action.`;
+});
+
+app.ai.action('sendLists', async (context: TurnContext, state: ApplicationTurnState, parameters: ListAndCandidates) => {
+  await sendLists(state, state.temp.authTokens['graph']);
+  return `Email sent to HR. Summarize your action.`;
+});
+
 // Add authentication event handlers
 app.authentication.get('graph').onUserSignInSuccess(async (context, state) => {
   const token = state.temp.authTokens['graph'];
@@ -145,7 +177,7 @@ app.message('/signout', async (context, state) => {
 });
 
 // Function to fetch user's display name using Microsoft Graph
-async function getUserDisplayName(token: string): Promise<string | undefined> {
+export async function getUserDisplayName(token: string): Promise<string | undefined> {
   let displayName: string | undefined;
 
   const client = Client.init({
@@ -162,6 +194,32 @@ async function getUserDisplayName(token: string): Promise<string | undefined> {
   }
 
   return displayName;
+}
+
+// Function to dynamically select prompts based on the user's input
+async function choosePrompt(context) {
+  if (context.activity.text.includes('list')) {
+    const template = await prompts.getPrompt('monologue');
+    return template;
+  } else {
+    const template = await prompts.getPrompt('chat');
+    const skprompt = fs.readFileSync(path.join(__dirname, '..', 'prompts', 'chat', 'skprompt.txt'));
+
+    const dataSources = (template.config.completion as any)['data_sources'];
+
+    dataSources.forEach((dataSource: any) => {
+      if (dataSource.type === 'azure_search') {
+        dataSource.parameters.authentication.key = config.azureSearchKey;
+        dataSource.parameters.endpoint = config.azureSearchEndpoint;
+        dataSource.parameters.indexName = config.indexName;
+        dataSource.parameters.embedding_dependency.deployment_name =
+          config.azureOpenAIEmbeddingDeploymentName;
+        dataSource.parameters.role_information = `${skprompt.toString('utf-8')}`;
+      }
+    });
+
+    return template;
+  }
 }
 
 // Create a local server
