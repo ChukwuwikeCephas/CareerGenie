@@ -21,7 +21,12 @@
 - **Feedback Loop** – Rate responses (👍/👎) to improve AI accuracy.  
 - **Citations** – View referenced resumes with Adaptive Cards.  
 - **AI-Generated Label** – Transparency in AI responses.  
-- **Sensitivity Label** – Marks confidential HR data.  
+- **Sensitivity Label** – Marks confidential HR data.
+
+# Architectural Diagram
+
+![diagram-export-4-30-2025-1_30_49-PM](https://github.com/user-attachments/assets/b95b8d0f-680f-4812-b1cc-6a667c5fb4ad)
+
 
 ## Tech Stack  
 
@@ -41,7 +46,7 @@
 ### Installation  
 1. Clone the repo:  
    ```bash  
-   git clone https://github.com/your-repo/CareerGenie.git  
+   git clone https://github.com/my-repo/CareerGenie.git  
    ```  
 2. Install dependencies:  
    ```bash  
