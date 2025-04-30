@@ -1,70 +1,84 @@
-# Overview of the Basic AI Chatbot template
+# CareerGenie - AI-Powered HR Assistant for Microsoft Teams  
 
-This app template is built on top of [Teams AI library](https://aka.ms/teams-ai-library).
-It showcases a bot app that responds to user questions like ChatGPT. This enables your users to talk with the AI bot in Teams.
+🚀 **CareerGenie** is a custom AI-powered chatbot built for Microsoft Teams that assists Human Resources teams in writing job posts and finding the best candidates using **Azure OpenAI** and **Azure AI Search**.  
 
-## Get started with the template
+## Features  
 
-> **Prerequisites**
->
-> To run the template in your local dev machine, you will need:
->
-> - [Node.js](https://nodejs.org/), supported versions: 18, 20, 22.
-> - [Teams Toolkit Visual Studio Code Extension](https://aka.ms/teams-toolkit) latest version or [Teams Toolkit CLI](https://aka.ms/teamsfx-toolkit-cli).
-> - Prepare your own [Azure OpenAI](https://aka.ms/oai/access) resource.
+✨ **AI-Powered Job Post Assistance**  
+- Generate tailored job descriptions using natural language prompts.  
+- Suggest required skills and qualifications for roles.  
 
-> For local debugging using Teams Toolkit CLI, you need to do some extra steps described in [Set up your Teams Toolkit CLI for local debugging](https://aka.ms/teamsfx-cli-debugging).
+🔍 **Smart Candidate Search**  
+- **Retrieval-Augmented Generation (RAG)** for searching resumes stored in **Azure AI Search**.  
+- Vector embeddings for semantic search (powered by `text-embedding-ada-002`).  
+- Filter candidates by skills, experience, languages, and more.  
 
-1. First, select the Teams Toolkit icon on the left in the VS Code toolbar.
-1. In file *env/.env.testtool.user*, fill in your Azure OpenAI key `SECRET_AZURE_OPENAI_API_KEY=<your-key>`, endpoint `AZURE_OPENAI_ENDPOINT=<your-endpoint>`, and deployment name `AZURE_OPENAI_DEPLOYMENT_NAME=<your-deployment>`.
-1. Press F5 to start debugging which launches your app in Teams App Test Tool using a web browser. Select `Debug in Test Tool`.
-1. You can send any message to get a response from the bot.
+💡 **Powered by AI Features**  
+- **Feedback Loop** – Rate responses (👍/👎) to improve AI accuracy.  
+- **Citations** – View referenced resumes with Adaptive Cards.  
+- **AI-Generated Label** – Transparency in AI responses.  
+- **Sensitivity Label** – Marks confidential HR data.  
 
-**Congratulations**! You are running an application that can now interact with users in Teams App Test Tool:
+## Tech Stack  
 
-![Basic AI Chatbot](https://github.com/OfficeDev/TeamsFx/assets/9698542/9bd22201-8fda-4252-a0b3-79531c963e5e)
+- **Backend:** Teams AI Library (TypeScript)  
+- **AI Models:** Azure OpenAI (`gpt-4`, `text-embedding-ada-002`)  
+- **Data Storage:** Azure AI Search (vector search)  
+- **UI:** Adaptive Cards for rich interactions  
 
-## What's included in the template
+## Setup  
 
-| Folder       | Contents                                            |
-| - | - |
-| `.vscode`    | VSCode files for debugging                          |
-| `appPackage` | Templates for the Teams application manifest        |
-| `env`        | Environment files                                   |
-| `infra`      | Templates for provisioning Azure resources          |
-| `src`        | The source code for the application                 |
+### Prerequisites  
+- Azure subscription  
+- [Azure OpenAI Service](https://portal.azure.com) (with `gpt-4` deployment)  
+- [Azure AI Search](https://portal.azure.com) (for resume indexing)  
+- Node.js v18+  
 
-The following files can be customized and demonstrate an example implementation to get you started.
+### Installation  
+1. Clone the repo:  
+   ```bash  
+   git clone https://github.com/your-repo/CareerGenie.git  
+   ```  
+2. Install dependencies:  
+   ```bash  
+   npm install  
+   ```  
+3. Configure `.env.local.user`:  
+   ```env  
+   AZURE_OPENAI_KEY="your-azure-openai-key"  
+   AZURE_OPENAI_ENDPOINT="your-azure-openai-endpoint"  
+   AZURE_OPENAI_DEPLOYMENT_NAME="gpt-4"  
+   AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME="text-embedding-ada-002"  
+   AZURE_SEARCH_KEY="your-ai-search-key"  
+   AZURE_SEARCH_ENDPOINT="your-ai-search-endpoint"  
+   INDEX_NAME="resumes"  
+   ```  
 
-| File                                 | Contents                                           |
-| - | - |
-|`src/index.ts`| Sets up the bot app server.|
-|`src/adapter.ts`| Sets up the bot adapter.|
-|`src/config.ts`| Defines the environment variables.|
-|`src/prompts/chat/skprompt.txt`| Defines the prompt.|
-|`src/prompts/chat/config.json`| Configures the prompt.|
-|`src/app/app.ts`| Handles business logics for the Basic AI Chatbot.|
+### Run Locally  
+- Debug in Teams:  
+  - Press `F5` in VS Code (using Teams Toolkit).  
+  - Select **Debug in Teams (Edge/Chrome)**.  
 
-The following are Teams Toolkit specific project files. You can [visit a complete guide on Github](https://github.com/OfficeDev/TeamsFx/wiki/Teams-Toolkit-Visual-Studio-Code-v5-Guide#overview) to understand how Teams Toolkit works.
+## Usage  
+1. **Write Job Posts**:  
+   - *"Help me draft a job post for a Senior Developer with Python experience."*  
+2. **Find Candidates**:  
+   - *"Find candidates with 5+ years of .NET experience who speak Spanish."*  
+3. **Review Citations**:  
+   - Click citation numbers to view full resume excerpts.  
 
-| File                                 | Contents                                           |
-| - | - |
-|`teamsapp.yml`|This is the main Teams Toolkit project file. The project file defines two primary things:  Properties and configuration Stage definitions. |
-|`teamsapp.local.yml`|This overrides `teamsapp.yml` with actions that enable local execution and debugging.|
-|`teamsapp.testtool.yml`| This overrides `teamsapp.yml` with actions that enable local execution and debugging in Teams App Test Tool.|
 
-## Extend the template
+## Screenshots  
+![CareerGenie in Teams](https://example.com/careergenie-demo.gif)  
+*Chatting with CareerGenie to find candidates.*  
 
-You can follow [Build a Basic AI Chatbot in Teams](https://aka.ms/teamsfx-basic-ai-chatbot) to extend the Basic AI Chatbot template with more AI capabilities, like:
-- [Customize prompt](https://aka.ms/teamsfx-basic-ai-chatbot#customize-prompt)
-- [Customize user input](https://aka.ms/teamsfx-basic-ai-chatbot#customize-user-input)
-- [Customize conversation history](https://aka.ms/teamsfx-basic-ai-chatbot#customize-conversation-history)
-- [Customize model type](https://aka.ms/teamsfx-basic-ai-chatbot#customize-model-type)
-- [Customize model parameters](https://aka.ms/teamsfx-basic-ai-chatbot#customize-model-parameters)
-- [Handle messages with image](https://aka.ms/teamsfx-basic-ai-chatbot#handle-messages-with-image)
+## Contributing  
+PRs welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).  
 
-## Additional information and references
+## License  
+MIT  
 
-- [Teams Toolkit Documentations](https://docs.microsoft.com/microsoftteams/platform/toolkit/teams-toolkit-fundamentals)
-- [Teams Toolkit CLI](https://aka.ms/teamsfx-toolkit-cli)
-- [Teams Toolkit Samples](https://github.com/OfficeDev/TeamsFx-Samples)
+---  
+💬 **Get Started**: Deploy your own HR assistant today! Follow the [full lab guide](https://learn.microsoft.com).  
+
+#PoweredByAI #AzureOpenAI #MicrosoftTeams #HRTech
