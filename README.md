@@ -2,6 +2,10 @@
 
 🚀 **CareerGenie** is a custom AI-powered chatbot built for Microsoft Teams that assists Human Resources teams in writing job posts and finding the best candidates using **Azure OpenAI** and **Azure AI Search**.  
 
+
+![image](https://github.com/user-attachments/assets/fbf229c4-c43b-4e24-a13f-4c51bfdae5e8)
+
+
 ## Features  
 
 ✨ **AI-Powered Job Post Assistance**  
